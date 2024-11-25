@@ -30,6 +30,8 @@ function start() {
     canvas.height = CANVAS_HEIGHT;
     ctx = canvas.getContext("2d");
 
+    ball = createCircleSprite(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 3, 3, BALL_RADIUS, getRandomColorHexString());
+
     paddle = createRectSprite(0, CANVAS_HEIGHT - PADDLE_HEIGHT, 0, 0, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_COLOR);
 
     createNewBall();
@@ -63,12 +65,6 @@ function onKeyEvent(e){
 //     drawText(CANVAS_WIDTH / 3, CANVAS_HEIGHT / 2 - 18, playerOneScore, 36, "black");
 //     drawText(CANVAS_WIDTH - (CANVAS_WIDTH / 3), CANVAS_HEIGHT / 2 - 18, playerTwoScore, 36, "black");
 // }
-
-function createNewBall(){
-
-    const color = getRandomColorHexString();
-    ball = createCircleSprite(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 3, 3, BALL_RADIUS, color);
-}
 
 function handleCollisions(){
     handleBallWallCollisions(ball);
