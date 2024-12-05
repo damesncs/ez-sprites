@@ -1,3 +1,4 @@
+// simple sprites - breakout POC
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 300;
 
@@ -22,6 +23,8 @@ window.onload = start;
 
 let ball, paddle;
 
+let bricks = [];
+
 let playerScore = 0;
 
 function start() {
@@ -33,8 +36,6 @@ function start() {
     ball = createCircleSprite(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 3, 3, BALL_RADIUS, getRandomColorHexString());
 
     paddle = createRectSprite(0, CANVAS_HEIGHT - PADDLE_HEIGHT, 0, 0, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_COLOR);
-
-    createNewBall();
 
     setInterval(drawEachFrame, 15);
 
@@ -61,11 +62,6 @@ function onKeyEvent(e){
     // otherwise, do nothing
 }
 
-// function drawScores(){
-//     drawText(CANVAS_WIDTH / 3, CANVAS_HEIGHT / 2 - 18, playerOneScore, 36, "black");
-//     drawText(CANVAS_WIDTH - (CANVAS_WIDTH / 3), CANVAS_HEIGHT / 2 - 18, playerTwoScore, 36, "black");
-// }
-
 function handleCollisions(){
     handleBallWallCollisions(ball);
     handleBallPaddleCollisions(ball, paddle);
@@ -76,17 +72,20 @@ function handleBallWallCollisions(b){
     if (b.leftEdge < 0){
         // bounce
         b.dx = -b.dx;
+        b.color = getRandomColorHexString();
     }
 
     if (b.rightEdge > CANVAS_WIDTH){
         // bounce
         b.dx = -b.dx;
+        b.color = getRandomColorHexString();
     }
 
     // check if ball is colliding with top wall
     if (b.topEdge < 0){
         // reverse y direction
         b.dy = -b.dy;
+        b.color = getRandomColorHexString();
     }
 
     if(b.bottomEdge > CANVAS_HEIGHT){
@@ -104,8 +103,29 @@ function handleBallPaddleCollisions(b, p){
     }
 }
 
-function handleBallBrickCollisions(b, radius, brick){
+function handleBallBrickCollisions(b, brick){
+    if(areCircleAndRectangleColliding(b.x, b.y, b.radius, brick.x, brick.y, brick.width, brick.height)){
+        // TODO actually need to know which edge we bounced on
+    }
+}
 
+// returns boolean
+// hat tip https://www.jeffreythompson.org/collision-detection/circle-rect.php
+function areCircleAndRectangleColliding(cx, cy, cr, rx, ry, rw, rh){
+    let testX = cx;
+    let testY = cy;
+
+    if (cx < rx)         testX = rx;      // test left edge
+    else if (cx > rx+rw) testX = rx+rw;   // right edge
+    if (cy < ry)         testY = ry;      // top edge
+    else if (cy > ry+rh) testY = ry+rh;   // bottom edge
+
+    let distX = cx - testX;
+    let distY = cy - testY;
+    const distance = Math.sqrt( (distX*distX) + (distY*distY) );
+
+    // if the distance is less than the radius, collision!
+    return distance <= cr;
 }
 
 function resetBall(b){
@@ -132,38 +152,73 @@ function onKeyEventArrowRight(eventType){
 }
 
 function createRectSprite(x, y, dx, dy, width, height, color){
-    return createSprite(x, y, dx, dy, drawRect, [width, height, color], getRectEdges);
+    const drawRect = (rect) => {
+        ctx.fillStyle = rect.color;
+        ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+    }
+
+    const getRectEdges = (rect) => {
+        return {
+            leftEdge: rect.x,
+            rightEdge: rect.x + rect.width,
+            topEdge: rect.y,
+            bottomEdge: rect.y + rect.height
+        }
+    }
+
+    let sprite = createSprite(x, y, dx, dy, color, drawRect, getRectEdges);
+    sprite.width = width;
+    sprite.height = height;
+    return sprite;
 }
 
 function createCircleSprite(x, y, dx, dy, radius, color){
-    return createSprite(x, y, dx, dy, drawCircle, [radius, color], getCircleEdges);
+    const drawCircle = (circle) => {
+        ctx.fillStyle = circle.color;
+        ctx.beginPath();
+        // arc(x, y, radius, startAngle, endAngle)
+        ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+
+    const getCircleEdges = (circle) =>{
+        return {
+            leftEdge: circle.x - circle.radius,
+            rightEdge: circle.x + circle.radius,
+            topEdge: circle.y - circle.radius,
+            bottomEdge: circle.y + circle.radius
+        }
+    }
+    let sprite = createSprite(x, y, dx, dy, color, drawCircle, getCircleEdges);
+    sprite.radius = radius;
+    return sprite;
 }
 
-function createSprite(initialX, initialY, initialDX, initialDY, drawFn, drawParams, edgeFn){
-    let newSprite = {
-        x: initialX,
-        y: initialY,
-        dx: initialDX,
-        dy: initialDY,
+function createSprite(x, y, dx, dy, color, drawFn, findEdgesFn){
+    const sprite= {
+        x: x,
+        y: y,
+        dx: dx,
+        dy: dy,
+        color: color,
         leftEdge: 0,
         rightEdge: 0,
         topEdge: 0,
         bottomEdge: 0,
         draw: drawFn,
-        drawParams: drawParams,
-        findEdges: edgeFn
+        findEdges: findEdgesFn
     };
-    SPRITES.push(newSprite);
-    return newSprite;
+    SPRITES.push(sprite);
+    return sprite;
 }
 
 function moveAndDrawSprites(){
     SPRITES.forEach(s => {
         s.x += s.dx;
         s.y += s.dy;
-        s.draw(s.x, s.y, ...s.drawParams);
+        s.draw(s);
         // maybe there's a terser way to do this
-        const edges = s.findEdges(s.x, s.y, ...s.drawParams);
+        const edges = s.findEdges(s);
         s.leftEdge = edges.leftEdge;
         s.rightEdge = edges.rightEdge;
         s.topEdge = edges.topEdge;
@@ -173,37 +228,6 @@ function moveAndDrawSprites(){
 
 function drawBorder(){
     ctx.strokeRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-}
-
-function drawRect(x, y, width, height, color){
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, width, height);
-}
-
-function getRectEdges(x, y, width, height){
-    return {
-        leftEdge: x,
-        rightEdge: x + width,
-        topEdge: y,
-        bottomEdge: y + height
-    }
-}
-
-function drawCircle(x, y, radius, color){
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    // arc(x, y, radius, startAngle, endAngle)
-    ctx.arc(x, y, radius, 0, 2 * Math.PI);
-    ctx.fill();
-}
-
-function getCircleEdges(x, y, radius){
-    return {
-        leftEdge: x - radius,
-        rightEdge: x + radius,
-        topEdge: y - radius,
-        bottomEdge: y + radius
-    }
 }
 
 function drawText(x, y, text, fontSize, color){
