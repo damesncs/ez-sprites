@@ -121,19 +121,15 @@ function checkBallPaddleCollisions(ball, paddle){
 }
 
 function checkBallBrickCollisions(ball, brick){
-    if(circleRectangleTopEdgeAreColliding(ball, brick)){
+    if(circleRectangleTopEdgeAreColliding(ball, brick) ||
+            circleRectangleBottomEdgeAreColliding(ball, brick)){
         deleteBrick(brick);
         ball.dy = -ball.dy;
-    } else if(circleRectangleBottomEdgeAreColliding(ball, brick)){
-        deleteBrick(brick);
-        ball.dy = -ball.dy;
-    } else if(circleRectangleRightEdgeAreColliding(ball, brick)){
+    } else if(circleRectangleRightEdgeAreColliding(ball, brick) || 
+                circleRectangleLeftEdgeAreColliding(ball, brick)){
         deleteBrick(brick);
         ball.dx = -ball.dx;
-    } else if(circleRectangleLeftEdgeAreColliding(ball, brick)){
-        deleteBrick(brick);
-        ball.dx = -ball.dx;
-    }    
+    } 
 }
 
 function deleteBrick(brick){
