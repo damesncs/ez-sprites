@@ -6,7 +6,7 @@ const BALL_RADIUS = 10;
 
 const PADDLE_HEIGHT = 10;
 const PADDLE_WIDTH = 50;
-const PADDLE_SPEED = 4;
+const PADDLE_SPEED = 5;
 
 const PADDLE_COLOR = "blue";
 
@@ -110,6 +110,13 @@ function checkBallWallCollisions(b){
 function checkBallPaddleCollisions(ball, paddle){
     if(circleRectangleTopEdgeAreColliding(ball, paddle)){
         ball.dy = -ball.dy;
+        if(paddle.dx > 0){ // paddle moving right
+            if(ball.dx < 0) ball.dx -= 1; // ball moving left, subtract vel
+            else            ball.dx += 1; // ball moving right, add vel
+        } else if(paddle.dx < 0){ // paddle moving left
+            if(ball.dx < 0) ball.dx += 1;
+            else            ball.dx -= 1;
+        }
     }
 }
 
@@ -136,45 +143,39 @@ function deleteBrick(brick){
 
 // returns true if circle sprite is colliding with rectangle sprite's top edge
 function circleRectangleTopEdgeAreColliding(c, r){
-    if (c.y < r.topEdge){
-        if(c.x > r.rightEdge){
-            return checkCircleRectDistance(c, r.rightEdge, r.topEdge);
-        } else if(c.x < r.leftEdge){
-            return checkCircleRectDistance(c, r.leftEdge, r.topEdge);
-        } else {
-            // return c.
-        }
+    if (c.y < r.topEdge && c.rightEdge > r.leftEdge && c.leftEdge < r.rightEdge){
+        return checkDistanceToPointLessThanRadius(c, c.x, r.topEdge);
     }
     return false;
 }
 
 function circleRectangleBottomEdgeAreColliding(c, r){
-    if (c.y > r.bottomEdge){
-        return checkCircleRectDistance(c, r.x, r.bottomEdge);
+    if (c.y > r.bottomEdge && c.rightEdge > r.leftEdge && c.leftEdge < r.rightEdge){
+        return checkDistanceToPointLessThanRadius(c, c.x, r.bottomEdge);
     }
     return false;
 }
 
 function circleRectangleRightEdgeAreColliding(c, r){
-    if (c.x > r.rightEdge){
-        return checkCircleRectDistance(c, r.rightEdge, r.y);
+    if (c.x > r.rightEdge && c.bottomEdge > r.topEdge && c.topEdge < r.bottomEdge){
+        return checkDistanceToPointLessThanRadius(c, r.rightEdge, c.y);
     }
     return false;
 }
 
 function circleRectangleLeftEdgeAreColliding(c, r){
-    if (c.x < r.leftEdge){
-        return checkCircleRectDistance(c, r.leftEdge, r.y);
+    if (c.x < r.leftEdge && c.bottomEdge > r.topEdge && c.topEdge < r.bottomEdge){
+        return checkDistanceToPointLessThanRadius(c, r.leftEdge, c.y);
     }
     return false;
 }
 
 // hat tip https://www.jeffreythompson.org/collision-detection/circle-rect.php
-function checkCircleRectDistance(c, testX, testY){
-    let distX = c.x - testX;
-    let distY = c.y - testY;
+function checkDistanceToPointLessThanRadius(circle, testX, testY){
+    let distX = circle.x - testX;
+    let distY = circle.y - testY;
     const distance = Math.sqrt( (distX*distX) + (distY*distY) );
-    return distance <= c.radius;
+    return distance <= circle.radius;
 }
 
 function onKeyEvent(e){
