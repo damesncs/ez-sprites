@@ -15,15 +15,13 @@ const EVENT_KEY_RELEASED = "keyup";
 
 const SPRITES = [];
 
-const BRICKS = [];
+const BRICK_SPRITES = [];
 
 let canvas;
 let ctx;
 window.onload = start;
 
-let ball, paddle;
-
-let bricks = [];
+let ballSprite, paddleSprite;
 
 let playerScore = 0;
 
@@ -33,9 +31,11 @@ function start() {
     canvas.height = CANVAS_HEIGHT;
     ctx = canvas.getContext("2d");
 
-    ball = createCircleSprite(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 3, 3, BALL_RADIUS, getRandomColorHexString());
+    createBricks();
 
-    paddle = createRectSprite(0, CANVAS_HEIGHT - PADDLE_HEIGHT, 0, 0, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_COLOR);
+    paddleSprite = createRectSprite(0, CANVAS_HEIGHT - PADDLE_HEIGHT, 0, 0, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_COLOR);
+
+    ballSprite = createCircleSprite(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 3, 3, BALL_RADIUS, getRandomColorHexString());
 
     setInterval(drawEachFrame, 15);
 
@@ -43,49 +43,61 @@ function start() {
     addEventListener("keyup", onKeyEvent);
 }
 
+function createBricks(){
+    const brickHeight = 10;
+    const brickWidth = 50;
+    const brickMargin = 10;
+    const nRows = Math.floor(CANVAS_WIDTH / (brickWidth + brickMargin));
+    const nCols = 5;
+
+    for(let row = 0; row < nRows; row++){
+        for(let col = 0; col < nCols; col++){
+            const brickX = row * (brickWidth + brickMargin) + brickMargin;
+            const brickY = col * (brickHeight + brickMargin) + brickMargin;
+            const newBrick = createRectSprite(brickX, brickY, 0, 0, brickWidth, brickHeight, "orange");
+            BRICK_SPRITES.push(newBrick);
+        }
+    }
+}
+
+
 function drawEachFrame(){
     clearCanvas();
     drawBorder();
-    handleCollisions();
+    checkSpriteCollisions();
     moveAndDrawSprites();
     // drawScores();
 }
 
-function onKeyEvent(e){
-    // console.log(e);
-    if(e.code === "ArrowRight"){
-        onKeyEventArrowRight(e.type);
-    }
-    else if (e.code === "ArrowLeft"){
-        onKeyEventArrowLeft(e.type);
-    }
-    // otherwise, do nothing
+function resetBall(b){
+    b.x = CANVAS_WIDTH / 2;
+    b.y = CANVAS_HEIGHT / 2;
 }
 
-function handleCollisions(){
-    handleBallWallCollisions(ball);
-    handleBallPaddleCollisions(ball, paddle);
-    BRICKS.forEach(b => handleBallBrickCollisions(ball, BALL_RADIUS, b));
+function checkSpriteCollisions(){
+    checkBallWallCollisions(ballSprite);
+    checkBallPaddleCollisions(ballSprite, paddleSprite);
+    BRICK_SPRITES.forEach(brick => checkBallBrickCollisions(ballSprite, brick));
 }
 
-function handleBallWallCollisions(b){
+function checkBallWallCollisions(b){
     if (b.leftEdge < 0){
         // bounce
         b.dx = -b.dx;
-        b.color = getRandomColorHexString();
+        // b.color = getRandomColorHexString();
     }
 
     if (b.rightEdge > CANVAS_WIDTH){
         // bounce
         b.dx = -b.dx;
-        b.color = getRandomColorHexString();
+        // b.color = getRandomColorHexString();
     }
 
     // check if ball is colliding with top wall
     if (b.topEdge < 0){
         // reverse y direction
         b.dy = -b.dy;
-        b.color = getRandomColorHexString();
+        // b.color = getRandomColorHexString();
     }
 
     if(b.bottomEdge > CANVAS_HEIGHT){
@@ -95,59 +107,100 @@ function handleBallWallCollisions(b){
     }
 }
 
-function handleBallPaddleCollisions(b, p){
-    if(b.bottomEdge > p.topEdge &&
-        b.x > p.leftEdge &&
-        b.x < p.rightEdge){
-        b.dy = -b.dy;
+function checkBallPaddleCollisions(ball, paddle){
+    if(circleRectangleTopEdgeAreColliding(ball, paddle)){
+        ball.dy = -ball.dy;
     }
 }
 
-function handleBallBrickCollisions(b, brick){
-    if(areCircleAndRectangleColliding(b.x, b.y, b.radius, brick.x, brick.y, brick.width, brick.height)){
-        // TODO actually need to know which edge we bounced on
-    }
+function checkBallBrickCollisions(ball, brick){
+    if(circleRectangleTopEdgeAreColliding(ball, brick)){
+        deleteBrick(brick);
+        ball.dy = -ball.dy;
+    } else if(circleRectangleBottomEdgeAreColliding(ball, brick)){
+        deleteBrick(brick);
+        ball.dy = -ball.dy;
+    } else if(circleRectangleRightEdgeAreColliding(ball, brick)){
+        deleteBrick(brick);
+        ball.dx = -ball.dx;
+    } else if(circleRectangleLeftEdgeAreColliding(ball, brick)){
+        deleteBrick(brick);
+        ball.dx = -ball.dx;
+    }    
 }
 
-// returns boolean
+function deleteBrick(brick){
+    BRICK_SPRITES.splice(BRICK_SPRITES.indexOf(brick), 1);
+    SPRITES.splice(SPRITES.indexOf(brick), 1);
+}
+
+// returns true if circle sprite is colliding with rectangle sprite's top edge
+function circleRectangleTopEdgeAreColliding(c, r){
+    if (c.y < r.topEdge){
+        if(c.x > r.rightEdge){
+            return checkCircleRectDistance(c, r.rightEdge, r.topEdge);
+        } else if(c.x < r.leftEdge){
+            return checkCircleRectDistance(c, r.leftEdge, r.topEdge);
+        } else {
+            // return c.
+        }
+    }
+    return false;
+}
+
+function circleRectangleBottomEdgeAreColliding(c, r){
+    if (c.y > r.bottomEdge){
+        return checkCircleRectDistance(c, r.x, r.bottomEdge);
+    }
+    return false;
+}
+
+function circleRectangleRightEdgeAreColliding(c, r){
+    if (c.x > r.rightEdge){
+        return checkCircleRectDistance(c, r.rightEdge, r.y);
+    }
+    return false;
+}
+
+function circleRectangleLeftEdgeAreColliding(c, r){
+    if (c.x < r.leftEdge){
+        return checkCircleRectDistance(c, r.leftEdge, r.y);
+    }
+    return false;
+}
+
 // hat tip https://www.jeffreythompson.org/collision-detection/circle-rect.php
-function areCircleAndRectangleColliding(cx, cy, cr, rx, ry, rw, rh){
-    let testX = cx;
-    let testY = cy;
-
-    if (cx < rx)         testX = rx;      // test left edge
-    else if (cx > rx+rw) testX = rx+rw;   // right edge
-    if (cy < ry)         testY = ry;      // top edge
-    else if (cy > ry+rh) testY = ry+rh;   // bottom edge
-
-    let distX = cx - testX;
-    let distY = cy - testY;
+function checkCircleRectDistance(c, testX, testY){
+    let distX = c.x - testX;
+    let distY = c.y - testY;
     const distance = Math.sqrt( (distX*distX) + (distY*distY) );
-
-    // if the distance is less than the radius, collision!
-    return distance <= cr;
+    return distance <= c.radius;
 }
 
-function resetBall(b){
-    b.x = CANVAS_WIDTH / 2;
-    b.y = CANVAS_HEIGHT / 2;
+function onKeyEvent(e){
+    if(e.code === "ArrowRight"){
+        onKeyEventArrowRight(e.type);
+    }
+    else if (e.code === "ArrowLeft"){
+        onKeyEventArrowLeft(e.type);
+    }
 }
 
 function onKeyEventArrowLeft(eventType){
     if(eventType === EVENT_KEY_PRESSED){
-        paddle.dx = -PADDLE_SPEED;
+        paddleSprite.dx = -PADDLE_SPEED;
     }
     if(eventType === EVENT_KEY_RELEASED){
-        paddle.dx = 0;
+        paddleSprite.dx = 0;
     }
 }
 
 function onKeyEventArrowRight(eventType){
     if(eventType === EVENT_KEY_PRESSED){
-        paddle.dx = PADDLE_SPEED;
+        paddleSprite.dx = PADDLE_SPEED;
     }
     if(eventType === EVENT_KEY_RELEASED){
-        paddle.dx = 0;
+        paddleSprite.dx = 0;
     }
 }
 
