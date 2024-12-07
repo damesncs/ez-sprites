@@ -6,7 +6,7 @@ const BALL_RADIUS = 10;
 
 const PADDLE_HEIGHT = 10;
 const PADDLE_WIDTH = 50;
-const PADDLE_SPEED = 5;
+const PADDLE_SPEED = 6;
 
 const PADDLE_COLOR = "blue";
 
@@ -54,7 +54,7 @@ function createBricks(){
         for(let col = 0; col < nCols; col++){
             const brickX = row * (brickWidth + brickMargin) + brickMargin;
             const brickY = col * (brickHeight + brickMargin) + brickMargin;
-            const newBrick = createRectSprite(brickX, brickY, 0, 0, brickWidth, brickHeight, "orange");
+            const newBrick = createRectSprite(brickX, brickY, 0, 0, brickWidth, brickHeight, getRandomColorHexString());
             BRICK_SPRITES.push(newBrick);
         }
     }
@@ -267,7 +267,6 @@ function moveAndDrawSprites(){
         s.x += s.dx;
         s.y += s.dy;
         s.draw(s);
-        // maybe there's a terser way to do this
         const edges = s.findEdges(s);
         s.leftEdge = edges.leftEdge;
         s.rightEdge = edges.rightEdge;
