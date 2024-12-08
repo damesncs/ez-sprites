@@ -1,7 +1,88 @@
 <html>
   <head>
       <title>Breakout</title>
-        <script src="js/script.js"></script>
+        <script type="application/json" id="ghost-sprite">
+            {
+                "shapes": [
+                    {
+                        "name": "head",
+                        "type": "circle",
+                        "x": 250,
+                        "y": 150,
+                        "r": 150,
+                        "constantColor": "blue"
+                    },
+                    {
+                        "name": "body",
+                        "type": "rect",
+                        "x": 100,
+                        "y": 150,
+                        "w": 300,
+                        "h": 300,
+                        "constantColor": "blue"
+                    },
+                    {
+                        "name": "center foot",
+                        "type": "circle",
+                        "x": 250,
+                        "y": 450,
+                        "r": 50,
+                        "constantColor": "blue"
+                    },
+                    {
+                        "name": "left foot",
+                        "type": "circle",
+                        "x": 150,
+                        "y": 450,
+                        "r": 50,
+                        "constantColor": "blue"
+                    },
+                    {
+                        "name": "right foot",
+                        "type": "circle",
+                        "x": 350,
+                        "y": 450,
+                        "r": 50,
+                        "constantColor": "blue"
+                    },
+                    {
+                        "name": "left eye",
+                        "type": "circle",
+                        "x": 200,
+                        "y": 150,
+                        "r": 30,
+                        "constantColor": "white"
+                    },
+                    {
+                        "name": "right eye",
+                        "type": "circle",
+                        "x": 300,
+                        "y": 150,
+                        "r": 30,
+                        "constantColor": "white"
+                    },
+                    {
+                        "name": "left pupil",
+                        "type": "circle",
+                        "x": 210,
+                        "y": 150,
+                        "r": 15,
+                        "constantColor": "black"
+                    },
+                    {
+                        "name": "right pupil",
+                        "type": "circle",
+                        "x": 310,
+                        "y": 150,
+                        "r": 15,
+                        "constantColor": "black"
+                    }
+                ]
+            }
+
+        </script>
+        <script src="js/ez-sprites.js" type="module"></script>
+        <script src="./js/breakout.js" type="module"></script>
         <link rel="stylesheet" href="css/style.css"/>
   </head>
     <body>
