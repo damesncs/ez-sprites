@@ -13,6 +13,8 @@ import {
     moveAndDrawSprites, removeSprite, setupCanvas
 } from "./ez-sprites.js";
 
+import ghostShapeList from "./ghost.json" with { type: "json" }
+
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 300;
 
@@ -46,9 +48,7 @@ function start() {
 
     ballSprite = createCircleSprite(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 3, 3, BALL_RADIUS, getRandomColorHexString());
 
-    ghostShapesObj = JSON.parse(document.getElementById("ghost-sprite").textContent);
-
-    ghost = createCompoundShapeRectSprite(100, 100, 1, 1, 200, 200, 0.125, ghostShapesObj);
+    ghost = createCompoundShapeRectSprite(100, 100, 1, 1, 0.125, ghostShapeList, true);
 
     setInterval(drawEachFrame, 15);
 
@@ -82,6 +82,7 @@ function createBricks(){
 
 function checkSpriteCollisions(){
     checkBallWallCollisions(ballSprite);
+    checkGhostWallCollisions(ghost);
     checkBallPaddleCollisions(ballSprite, paddleSprite);
     BRICK_SPRITES.forEach(brick => checkBallBrickCollisions(ballSprite, brick));
 }
@@ -107,6 +108,28 @@ function checkBallWallCollisions(b){
         // ball went past bottom, player loses
         // TODO game over
         resetBall(b);
+    }
+}
+
+function checkGhostWallCollisions(g){
+    if (g.leftEdge < 0){
+        // bounce
+        g.dx = -g.dx;
+    }
+
+    if (g.rightEdge > CANVAS_WIDTH){
+        // bounce
+        g.dx = -g.dx;
+    }
+
+    // check if ball is colliding with top wall
+    if (g.topEdge < 0){
+        // reverse y direction
+        g.dy = -g.dy;
+    }
+
+    if(g.bottomEdge > CANVAS_HEIGHT){
+        g.dy = -g.dy
     }
 }
 

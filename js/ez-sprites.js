@@ -20,6 +20,7 @@ export function setupCanvas (cvs, height, width){
 }
 
 export function drawBorder (){
+    _ctx.strokeStyle = "black";
     _ctx.strokeRect(0, 0, _canvas.width, _canvas.height);
 }
 
@@ -95,14 +96,14 @@ export function createCircleSprite(x, y, dx, dy, radius, color){
     return sprite;
 }
 
-export function createCompoundShapeRectSprite(x, y, dx, dy, width, height, scale, shapesObj) {
+export function createCompoundShapeRectSprite(x, y, dx, dy, scale, shapesObj, debug = false) {
     const draw = (s) => {
-        drawShapesObj(s.shapesObj, s.x, s.y, s.scale);
+        drawShapesObj(s.shapesObj, s.x, s.y, s.scale, debug);
     }
 
     let sprite = createSprite(x, y, dx, dy, null, draw, getRectEdges);
-    sprite.width = width;
-    sprite.height = height;
+    sprite.width = shapesObj.nativeWidth * scale;
+    sprite.height = shapesObj.nativeHeight * scale;
     sprite.scale = scale;
     sprite.shapesObj = shapesObj;
     return sprite;
@@ -180,11 +181,12 @@ export function checkDistanceToPointLessThanRadius(circle, testX, testY){
     return distance <= circle.radius;
 }
 
-export function drawShapesObj(sObj, originX, originY, scale){
-    if(!scale) scale = 1;
-    if(!originX) originX = 0;
-    if(!originY) originY = 0;
+export function drawShapesObj(sObj, originX = 0, originY = 0, scale = 1, debug = false){
     try {
+        if(debug){
+            _ctx.strokeStyle = "limegreen";
+            _ctx.strokeRect(originX, originY, sObj.nativeWidth * scale, sObj.nativeHeight * scale);
+        }
         sObj.shapes.forEach((s, i) => {
             if(s.type){
                 const shapeX = originX + s.x * scale;
