@@ -48,7 +48,7 @@ function start() {
 
     ballSprite = createCircleSprite(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 3, 3, BALL_RADIUS, getRandomColorHexString());
 
-    ghost = createCompoundShapeRectSprite(100, 100, 1, 1, 0.125, ghostShapeList, true);
+    // ghost = createCompoundShapeRectSprite(100, 100, 1, 1, 0.125, ghostShapeList, true);
 
     setInterval(drawEachFrame, 15);
 
@@ -82,7 +82,7 @@ function createBricks(){
 
 function checkSpriteCollisions(){
     checkBallWallCollisions(ballSprite);
-    checkGhostWallCollisions(ghost);
+    // checkGhostWallCollisions(ghost);
     checkBallPaddleCollisions(ballSprite, paddleSprite);
     BRICK_SPRITES.forEach(brick => checkBallBrickCollisions(ballSprite, brick));
 }
