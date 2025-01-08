@@ -3,33 +3,33 @@
 let _canvas;
 let _ctx;
 
-export const SHAPE_TYPE_RECT = "rect";
-export const SHAPE_TYPE_CIRC = "circle";
-export const SHAPE_TYPE_POINT = "point";
+ const SHAPE_TYPE_RECT = "rect";
+ const SHAPE_TYPE_CIRC = "circle";
+ const SHAPE_TYPE_POINT = "point";
 
 const POINT_RADIUS = 3;
 const POINT_COLOR = "black";
 
 const SPRITES = [];
 
-export function setupCanvas (cvs, height, width){
+ function setupCanvas (cvs, height, width){
     _canvas = cvs;
     _canvas.width = width;
     _canvas.height = height;
     _ctx = _canvas.getContext("2d");
 }
 
-export function drawBorder (){
+ function drawBorder (){
     _ctx.strokeStyle = "black";
     _ctx.strokeRect(0, 0, _canvas.width, _canvas.height);
 }
 
-export function drawRect (x, y, width, height, color) {
+ function drawRect (x, y, width, height, color) {
     _ctx.fillStyle = color;
     _ctx.fillRect(x, y, width, height);
 }
 
-export function drawCircle (x, y, radius, color) {
+ function drawCircle (x, y, radius, color) {
     _ctx.fillStyle = color;
     _ctx.beginPath();
     // arc(x, y, radius, startAngle, endAngle)
@@ -37,24 +37,24 @@ export function drawCircle (x, y, radius, color) {
     _ctx.fill();
 }
 
-export function drawText (x, y, text, fontSize, color){
+ function drawText (x, y, text, fontSize, color){
     _ctx.fillStyle = color;
     _ctx.font = `${fontSize}px sans-serif`;
     _ctx.fillText(text, x, y + fontSize);
 }
 
-export function clearCanvas(){
+ function clearCanvas(){
     _ctx.clearRect(0, 0, _canvas.width, _canvas.height);
 }
 
-export function getRandomColorHexString(){
+ function getRandomColorHexString(){
     const r = getRandom8BitIntegerAsHexString();
     const g = getRandom8BitIntegerAsHexString();
     const b = getRandom8BitIntegerAsHexString();
     return `#${r}${g}${b}`;
 }
 
-export function getRandom8BitIntegerAsHexString(){
+ function getRandom8BitIntegerAsHexString(){
     return Math.trunc(Math.random() * 256).toString(16);
 }
 
@@ -67,7 +67,7 @@ function getRectEdges (rect) {
     }
 }
 
-export function createRectSprite(x, y, dx, dy, width, height, color){
+ function createRectSprite(x, y, dx, dy, width, height, color){
     const draw = (r) => {
         drawRect(r.x, r.y, r.width, r.height, r.color);
     }
@@ -78,7 +78,7 @@ export function createRectSprite(x, y, dx, dy, width, height, color){
     return sprite;
 }
 
-export function createCircleSprite(x, y, dx, dy, radius, color){
+ function createCircleSprite(x, y, dx, dy, radius, color){
     const draw = (c) => {
         drawCircle(c.x, c.y, c.radius, c.color);
     }
@@ -96,7 +96,7 @@ export function createCircleSprite(x, y, dx, dy, radius, color){
     return sprite;
 }
 
-export function createCompoundShapeRectSprite(x, y, dx, dy, scale, shapesObj, debug = false) {
+ function createCompoundShapeRectSprite(x, y, dx, dy, scale, shapesObj, debug = false) {
     const draw = (s) => {
         drawShapesObj(s.shapesObj, s.x, s.y, s.scale, debug);
     }
@@ -109,7 +109,7 @@ export function createCompoundShapeRectSprite(x, y, dx, dy, scale, shapesObj, de
     return sprite;
 }
 
-export function createSprite(x, y, dx, dy, color, drawFn, findEdgesFn){
+ function createSprite(x, y, dx, dy, color, drawFn, findEdgesFn){
     const sprite = {
         x: x,
         y: y,
@@ -127,7 +127,7 @@ export function createSprite(x, y, dx, dy, color, drawFn, findEdgesFn){
     return sprite;
 }
 
-export function moveAndDrawSprites(){
+ function moveAndDrawSprites(){
     SPRITES.forEach(s => {
         s.x += s.dx;
         s.y += s.dy;
@@ -140,33 +140,46 @@ export function moveAndDrawSprites(){
     });
 }
 
-export function removeSprite(sprite){
+ function removeSprite(sprite){
     SPRITES.splice(SPRITES.indexOf(sprite), 1);
 }
 
+
+function rectOverlapsRect(r1, r2){
+    return rectOverlapsRectX(r1, r2) && rectOverlapsRectY(r1, r2);
+}
+
+function rectOverlapsRectX(r1, r2){
+    return r1.rightEdge > r2.leftEdge && r2.rightEdge > r1.leftEdge;
+}
+
+function rectOverlapsRectY(r1, r2){
+    return r1.bottomEdge > r2.topEdge && r1.topEdge < r2.bottomEdge;
+}
+
 // returns true if circle sprite is colliding with rectangle sprite's top edge
-export function circleRectangleTopEdgeAreColliding(c, r){
+ function circleRectangleTopEdgeAreColliding(c, r){
     if (c.y < r.topEdge && c.rightEdge > r.leftEdge && c.leftEdge < r.rightEdge){
         return checkDistanceToPointLessThanRadius(c, c.x, r.topEdge);
     }
     return false;
 }
 
-export function circleRectangleBottomEdgeAreColliding(c, r){
+ function circleRectangleBottomEdgeAreColliding(c, r){
     if (c.y > r.bottomEdge && c.rightEdge > r.leftEdge && c.leftEdge < r.rightEdge){
         return checkDistanceToPointLessThanRadius(c, c.x, r.bottomEdge);
     }
     return false;
 }
 
-export function circleRectangleRightEdgeAreColliding(c, r){
+ function circleRectangleRightEdgeAreColliding(c, r){
     if (c.x > r.rightEdge && c.bottomEdge > r.topEdge && c.topEdge < r.bottomEdge){
         return checkDistanceToPointLessThanRadius(c, r.rightEdge, c.y);
     }
     return false;
 }
 
-export function circleRectangleLeftEdgeAreColliding(c, r){
+ function circleRectangleLeftEdgeAreColliding(c, r){
     if (c.x < r.leftEdge && c.bottomEdge > r.topEdge && c.topEdge < r.bottomEdge){
         return checkDistanceToPointLessThanRadius(c, r.leftEdge, c.y);
     }
@@ -174,14 +187,14 @@ export function circleRectangleLeftEdgeAreColliding(c, r){
 }
 
 // hat tip https://www.jeffreythompson.org/collision-detection/circle-rect.php
-export function checkDistanceToPointLessThanRadius(circle, testX, testY){
+ function checkDistanceToPointLessThanRadius(circle, testX, testY){
     let distX = circle.x - testX;
     let distY = circle.y - testY;
     const distance = Math.sqrt( (distX*distX) + (distY*distY) );
-    return distance <= circle.radius;
+    return distance <= circle.r;
 }
 
-export function drawShapesObj(sObj, originX = 0, originY = 0, scale = 1, debug = false){
+ function drawShapesObj(sObj, originX = 0, originY = 0, scale = 1, debug = false){
     try {
         if(debug){
             _ctx.strokeStyle = "limegreen";
