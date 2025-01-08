@@ -1,6 +1,9 @@
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
 
+const Y_TO_SCALE_RATIO = 0.002;
+const Y_TO_SPEED_RATIO = 0.005;
+
 const EVENT_KEY_PRESSED = "keydown";
 const EVENT_KEY_RELEASED = "keyup";
 
@@ -22,7 +25,7 @@ function start() {
 
     tomatoShapes = loadObjectFromJsonById("tomato");
 
-    generateTomatoes(0);
+    generateTomatoes(10);
 
     // Load the objects which define the shapes to draw for the two versions of our ghost:
     characterRightShapes = loadObjectFromJsonById("character-right-shapes");
@@ -57,8 +60,8 @@ function loadObjectFromJsonById(id){
 
 function scaleCharacter(){
     if(character.y > 0){
-        character.scale = character.y * 0.002;
-        speed = character.y * 0.01;
+        character.scale = character.y * Y_TO_SCALE_RATIO;
+        speed = character.y * Y_TO_SPEED_RATIO;
     }
 
 }
@@ -145,7 +148,7 @@ function generateTomatoes(n){
     for(let i = 0; i < n; i++){
         let x = getRandom(0, CANVAS_WIDTH);
         let y = getRandom(0, CANVAS_HEIGHT);
-        tomatoes.push(createCompoundShapeRectSprite(x, y, 0, 0, 0.1, tomatoShapes, true));
+        tomatoes.push(createCompoundShapeRectSprite(x, y, 0, 0, 0.1 * y * Y_TO_SCALE_RATIO, tomatoShapes, true));
     }
 }
 
