@@ -11,7 +11,9 @@ window.onload = start;
 
 let speed = 1;
 
-// create global variables to store the ghost sprite and the ghost's two shapes objects (the two versions of the ghost)
+let time = 10;
+let score = 0;
+
 let character, characterRightShapes, characterLeftShapes, characterDownShapes, characterUpShapes;
 let background;
 let tomatoShapes;
@@ -21,7 +23,7 @@ let tomatoes = [];
 function start() {
     setupCanvas(document.getElementById("canvas"), CANVAS_HEIGHT, CANVAS_WIDTH);
 
-    background = createCompoundShapeRectSprite(0, 0, 0, 0, 1, loadObjectFromJsonById("background"), true);
+    background = createCompoundShapeRectSprite(0, 0, 0, 0, 1, loadObjectFromJsonById("background"), false);
 
     tomatoShapes = loadObjectFromJsonById("tomato");
 
@@ -41,10 +43,13 @@ function start() {
 
     // begin drawing frames every 15 milliseconds
     setInterval(drawEachFrame, 15);
+    setInterval(updateTimer, 1000);
 
     addEventListener("keydown", onKeyEvent);
     addEventListener("keyup", onKeyEvent);
 }
+
+
 
 function drawEachFrame(){
     clearCanvas();
@@ -52,10 +57,36 @@ function drawEachFrame(){
     moveAndDrawSprites();
     checkCollisions();
     scaleCharacter();
+    drawTimer();
+    drawScore();
 }
 
-function loadObjectFromJsonById(id){
-    return JSON.parse(document.getElementById(id).textContent);
+
+
+function updateTimer(){
+    if(time > 0){
+        time--;
+    } else {
+        time = "Time's up!";
+    }
+}
+
+function drawTimer(){
+    drawText(CANVAS_WIDTH / 2, 0, time, 36, "black");
+}
+
+function drawScore(){
+    drawText(CANVAS_WIDTH / 2, 100, score, 36, "red");
+}
+
+function checkCollisions(){
+    tomatoes.forEach((t, i)=> {
+        if(rectOverlapsRect(t, character)){
+            if(time > 0) score++;
+            removeSprite(t);
+            delete tomatoes.splice(i, 1);
+        }
+    });
 }
 
 function scaleCharacter(){
@@ -63,18 +94,8 @@ function scaleCharacter(){
         character.scale = character.y * Y_TO_SCALE_RATIO;
         speed = character.y * Y_TO_SPEED_RATIO;
     }
-
 }
 
-function checkCollisions(){
-    tomatoes.forEach((t, i)=> {
-        if(rectOverlapsRect(t, character)){
-            console.log("overlapping");
-            removeSprite(t);
-            delete tomatoes.splice(i, 1);
-        }
-    });
-}
 
 function onKeyEvent(e){
     if(e.code === "ArrowRight"){
@@ -156,4 +177,6 @@ function getRandom(min, max) {
     return Math.random() * (max - min) + min;
   }
   
-
+function loadObjectFromJsonById(id){
+    return JSON.parse(document.getElementById(id).textContent);
+}
