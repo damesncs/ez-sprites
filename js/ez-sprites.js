@@ -1,4 +1,4 @@
-// v0.1.1
+// v0.1.3 w/ drawPathsArray
 
 let _canvas;
 let _ctx;
@@ -35,6 +35,36 @@ export function drawCircle (x, y, radius, color) {
     // arc(x, y, radius, startAngle, endAngle)
     _ctx.arc(x, y, radius, 0, 2 * Math.PI);
     _ctx.fill();
+}
+
+function drawPathArray(x, y, paths, scale, debug){
+    paths.forEach(p => {
+        _ctx.lineCap = p["stroke-linecap"] ? p["stroke-linecap"] : _ctx.lineCap;
+        _ctx.lineJoin = p["stroke-linejoin"] ? p["stroke-linejoin"] : _ctx.lineJoin;
+        _ctx.lineWidth = p["stroke-width"] ? p["stroke-width"] : _ctx.lineWidth;
+        _ctx.miterLimit = p["stroke-miterlimit"] ? p["stroke-miterlimit"] : _ctx.miterLimit;
+        _ctx.translate(x, y);
+        _ctx.scale(scale, scale);
+        if(p.fill) {
+            const fillOpacity = p["fill-opacity"] ? Number.parseFloat(p["fill-opacity"]) : 1;
+            if(fillOpacity > 0 ){
+                const opAsHex = Math.trunc(fillOpacity * 255).toString(16);
+                _ctx.fillStyle = `${p.fill}${opAsHex}`;
+                _ctx.fill(p, "evenodd");
+            }
+            
+        }
+        if(p.stroke){
+            _ctx.strokeStyle = p.stroke;
+            _ctx.stroke(p);
+        }
+        
+        _ctx.setTransform(1, 0, 0, 1, 0, 0);
+    });
+    if(debug){
+        _ctx.strokeStyle = "limegreen";
+        _ctx.strokeRect(x, y, paths.nativeWidth * scale, paths.nativeHeight * scale)
+    }
 }
 
 export function drawText (x, y, text, fontSize, color){
@@ -106,6 +136,19 @@ export function createCompoundShapeRectSprite(x, y, dx, dy, scale, shapesObj, de
     sprite.height = shapesObj.nativeHeight * scale;
     sprite.scale = scale;
     sprite.shapesObj = shapesObj;
+    return sprite;
+}
+
+export async function createSpriteFromSvg(x, y, dx, dy, scale, svgDoc, debug = false){
+    const draw = (s) => {
+        drawPathArray(s.x, s.y, s.paths, s.scale, debug);
+    }
+    let sprite = createSprite(x, y, dx, dy, null, draw, getRectEdges);
+    sprite.paths = await pathArrayFromSvg(svgDoc);
+    sprite.width = sprite.paths.nativeWidth * scale;
+    sprite.height = sprite.paths.nativeHeight * scale;
+    sprite.scale = scale;
+    
     return sprite;
 }
 
@@ -211,4 +254,32 @@ export function drawShapesObj(sObj, originX = 0, originY = 0, scale = 1, debug =
     catch(e) {
         console.error(e);
     }
+}
+
+async function pathArrayFromSvg(svgDoc){
+    const r = await fetch(svgDoc);
+    const s = await r.text();
+    
+    const svgTempCtr = document.createElement("div");
+    svgTempCtr.id = "svg-temp-container";
+    svgTempCtr.style.display = "none";
+    svgTempCtr.innerHTML = s;
+    document.body.appendChild(svgTempCtr);
+
+    const paths = [];
+    // TODO apply transform for scaling?
+    
+    const pathQL = document.querySelectorAll("div#svg-temp-container svg g path");
+    pathQL.forEach(pathEl => {
+        const p = new Path2D(pathEl.getAttribute("d"));
+        for(const attr of pathEl.attributes) {
+            p[attr.name] = attr.value;
+        }
+        paths.push(p);
+    });
+    const vb = svgTempCtr.firstChild.getAttribute("viewBox").split(" ");
+    paths.nativeWidth = vb[2];
+    paths.nativeHeight = vb[3];    
+    document.body.removeChild(svgTempCtr);
+    return paths;
 }
