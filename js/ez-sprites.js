@@ -1,4 +1,4 @@
-// v0.1.3 w/ drawPathsArray
+// v0.1.4 w/ createCircleSpriteFromSvg
 
 let _canvas;
 let _ctx;
@@ -17,6 +17,14 @@ export function setupCanvas (cvs, height, width){
     _canvas.width = width;
     _canvas.height = height;
     _ctx = _canvas.getContext("2d");
+}
+
+export function drawLine(x1, y1, x2, y2, color){
+    _ctx.beginPath();
+    _ctx.moveTo(x1, y1);
+    _ctx.lineTo(x2, y2);
+    _ctx.strokeStyle = color;
+    _ctx.stroke();
 }
 
 export function drawBorder (){
@@ -63,6 +71,7 @@ function drawPathArray(x, y, paths, scale, debug){
     });
     if(debug){
         _ctx.strokeStyle = "limegreen";
+        _ctx.lineWidth = 1;
         _ctx.strokeRect(x, y, paths.nativeWidth * scale, paths.nativeHeight * scale)
     }
 }
@@ -97,6 +106,15 @@ function getRectEdges (rect) {
     }
 }
 
+function getCircleEdges(circle) {
+    return {
+        leftEdge: circle.x - circle.radius,
+        rightEdge: circle.x + circle.radius,
+        topEdge: circle.y - circle.radius,
+        bottomEdge: circle.y + circle.radius
+    }
+}
+
 export function createRectSprite(x, y, dx, dy, width, height, color){
     const draw = (r) => {
         drawRect(r.x, r.y, r.width, r.height, r.color);
@@ -113,14 +131,6 @@ export function createCircleSprite(x, y, dx, dy, radius, color){
         drawCircle(c.x, c.y, c.radius, c.color);
     }
 
-    const getCircleEdges = (circle) =>{
-        return {
-            leftEdge: circle.x - circle.radius,
-            rightEdge: circle.x + circle.radius,
-            topEdge: circle.y - circle.radius,
-            bottomEdge: circle.y + circle.radius
-        }
-    }
     let sprite = createSprite(x, y, dx, dy, color, draw, getCircleEdges);
     sprite.radius = radius;
     return sprite;
@@ -139,7 +149,8 @@ export function createCompoundShapeRectSprite(x, y, dx, dy, scale, shapesObj, de
     return sprite;
 }
 
-export async function createSpriteFromSvg(x, y, dx, dy, scale, svgDoc, debug = false){
+
+export async function createSpriteFromSvg(x, y, dx, dy, scale, svgDoc, debug = false) {
     const draw = (s) => {
         drawPathArray(s.x, s.y, s.paths, s.scale, debug);
     }
@@ -148,7 +159,30 @@ export async function createSpriteFromSvg(x, y, dx, dy, scale, svgDoc, debug = f
     sprite.width = sprite.paths.nativeWidth * scale;
     sprite.height = sprite.paths.nativeHeight * scale;
     sprite.scale = scale;
-    
+    return sprite;
+}
+
+export async function createCircleSpriteFromSvg(x, y, dx, dy, radius, scale, svgDoc, debug = false){
+    const draw = (s) => {
+        _ctx.save();
+        _ctx.beginPath();
+        _ctx.arc(s.x, s.y, s.radius, 0, 2 * Math.PI);
+        _ctx.clip();
+        drawPathArray(s.x - radius, s.y - radius, s.paths, s.scale, false);
+        _ctx.restore();
+        if(s.debug){
+            _ctx.strokeStyle = "limegreen";
+            _ctx.lineWidth = 1;
+            _ctx.arc(s.x, s.y, s.radius, 0, 2 * Math.PI);
+            _ctx.stroke();
+        }
+    }
+
+    let sprite = createSprite(x, y, dx, dy, null, draw, getCircleEdges);
+    sprite.paths = await pathArrayFromSvg(svgDoc);
+    sprite.scale = scale;
+    sprite.radius = radius;
+    sprite.debug = debug;
     return sprite;
 }
 
@@ -185,6 +219,25 @@ export function moveAndDrawSprites(){
 
 export function removeSprite(sprite){
     SPRITES.splice(SPRITES.indexOf(sprite), 1);
+}
+
+export function rectOverlapsRect(r1, r2){
+    return rectOverlapsRectX(r1, r2) && rectOverlapsRectY(r1, r2);
+}
+
+export function rectOverlapsRectX(r1, r2){
+    return r1.rightEdge > r2.leftEdge && r2.rightEdge > r1.leftEdge;
+}
+
+export function rectOverlapsRectY(r1, r2){
+    return r1.bottomEdge > r2.topEdge && r1.topEdge < r2.bottomEdge;
+}
+
+export function circleOverlapsRect(c, r){
+    return circleRectangleTopEdgeAreColliding(c, r) ||
+    circleRectangleBottomEdgeAreColliding(c, r) ||
+    circleRectangleLeftEdgeAreColliding(c, r) ||
+    circleRectangleRightEdgeAreColliding(c, r);
 }
 
 // returns true if circle sprite is colliding with rectangle sprite's top edge
@@ -256,7 +309,7 @@ export function drawShapesObj(sObj, originX = 0, originY = 0, scale = 1, debug =
     }
 }
 
-async function pathArrayFromSvg(svgDoc){
+export async function pathArrayFromSvg(svgDoc){
     const r = await fetch(svgDoc);
     const s = await r.text();
     
