@@ -90,7 +90,7 @@ function updateBallMovement(){
 }
 
 function createNewBall(){
-    ballSprites.push(createCircleSprite(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 0, 0, 15, getRandomColorHexString()));
+    ballSprites.push(createCircleSprite(mouseX, mouseY, 0, 0, 15, getRandomColorHexString()));
 }
 
 function onMouseMove(e){
@@ -105,6 +105,8 @@ function onMouseUp(e){
 }
 
 function onMouseDown(e){
+    mouseX = e.offsetX;
+    mouseY = e.offsetY;
     mouseDragging = true;
     createNewBall();
 }
