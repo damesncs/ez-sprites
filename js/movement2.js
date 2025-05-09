@@ -17,8 +17,7 @@ const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 500;
 
 const BALL_MOUSE_FOLLOW_SPEED = 2;
-
-const BALL_BOUNCE_SPEED_LOSS = 0.01;
+const BALL_BOUNCE_SPEED_LOSS = 2; // higher number => less bouncy
 const BALL_GRAVITY = 0.4;
 
 window.onload = start;
@@ -33,7 +32,6 @@ async function start() {
     setupCanvas(document.getElementById("canvas"), CANVAS_HEIGHT, CANVAS_WIDTH);
 
     createRandomObstacles(8);
-
 
     setInterval(drawEachFrame, 15);
 
@@ -72,54 +70,83 @@ function updateBallMovement(){
         } else {
             // this ball is not being dragged by the mouse, so apply physics rules
        
-            // apply gravity
-            if(eachBall.bottomEdge <= CANVAS_HEIGHT){
-                eachBall.dy += BALL_GRAVITY;
-            } else {
-                // come back to rest on bottom edge since ball has gone beyond it
-                eachBall.y = CANVAS_HEIGHT - eachBall.radius;
-                if(Math.abs(eachBall.dx) >= BALL_BOUNCE_SPEED_LOSS){
-                    eachBall.dx -= BALL_BOUNCE_SPEED_LOSS;
-                } else {
-                    eachBall.dx = 0;
-                }
-            }
-
             // check for collisions with obstacles
             obstacleSprites.forEach(o => {
-                if(circleRectangleBottomEdgeAreColliding(eachBall, o) || circleRectangleTopEdgeAreColliding(eachBall, o)){
-                    eachBall.dy = -eachBall.dy;
-                    eachBall.dy -= BALL_BOUNCE_SPEED_LOSS;
+                let topOrBottomColliding = false;
+
+                if(circleRectangleLeftEdgeAreColliding(eachBall, o)){
+                    eachBall.dx = -(getSpeedFromCollision(eachBall.dx));
+                    eachBall.x = o.leftEdge - eachBall.radius;
                 }
-                if(circleRectangleLeftEdgeAreColliding(eachBall, o) || circleRectangleRightEdgeAreColliding(eachBall, o)){
-                    eachBall.dx = -eachBall.dx;
-                    eachBall.dx -= BALL_BOUNCE_SPEED_LOSS;
+                else if(circleRectangleRightEdgeAreColliding(eachBall, o)){
+                    eachBall.dx = getSpeedFromCollision(eachBall.dx);
+                    eachBall.x = o.rightEdge + eachBall.radius;
+                } 
+
+                if(circleRectangleBottomEdgeAreColliding(eachBall, o)){            
+                    eachBall.dy = getSpeedFromCollision(eachBall.dy);
+                    eachBall.y = o.bottomEdge + eachBall.radius;
+                    topOrBottomColliding = true;
                 }
+                else if(circleRectangleTopEdgeAreColliding(eachBall, o)){                    
+                    eachBall.dy = -(getSpeedFromCollision(eachBall.dy));
+                    eachBall.y = o.topEdge - eachBall.radius;
+                    topOrBottomColliding = true;
+                }
+
+                // handle the situation where the ball is near the corner of the obstacle
+                if(topOrBottomColliding){
+                    if(eachBall.x >= o.rightEdge && eachBall.leftEdge <= o.rightEdge){
+                        eachBall.x = o.rightEdge + eachBall.radius;
+                        eachBall.dx += BALL_BOUNCE_SPEED_LOSS / 4;
+                    } else if(eachBall.x <= o.leftEdge && eachBall.rightEdge >= o.leftEdge){
+                        eachBall.x = o.leftEdge - eachBall.radius;
+                        eachBall.dx -= BALL_BOUNCE_SPEED_LOSS / 4;
+                    } 
+                }
+                
             });
 
              // bounce on right wall
-            if(eachBall.rightEdge > CANVAS_WIDTH){
-                eachBall.dx = -eachBall.dx;
+            if(eachBall.rightEdge >= CANVAS_WIDTH){
+                eachBall.dx = -(getSpeedFromCollision(eachBall.dx));
+                eachBall.x = CANVAS_WIDTH - eachBall.radius;
             }
-
             // bounce on left wall
-            if(eachBall.leftEdge < 0){
-                eachBall.dx = -eachBall.dx;
+            else if(eachBall.leftEdge <= 0){
+                eachBall.dx = getSpeedFromCollision(eachBall.dx);
+                eachBall.x = eachBall.radius;
             }
 
             // bounce on top wall
-            if(eachBall.topEdge < 0){
-                eachBall.dy = -eachBall.dy;
+            if(eachBall.topEdge <= 0){
+                eachBall.dy = getSpeedFromCollision(eachBall.dy);
+                eachBall.y = eachBall.radius;
             }
-
             // bounce on bottom wall
-            if(eachBall.bottomEdge > CANVAS_HEIGHT){
-                eachBall.dy = -eachBall.dy + 0.5; // simulate ball losing energy when it bounces
+            else if(eachBall.bottomEdge >= CANVAS_HEIGHT){
+                eachBall.dy = -(getSpeedFromCollision(eachBall.dy));
+                eachBall.y = CANVAS_HEIGHT - eachBall.radius;
             }
+        }
+
+         // apply gravity
+         if(eachBall.bottomEdge <= CANVAS_HEIGHT){
+            eachBall.dy += BALL_GRAVITY;
+        } else {
+            // come back to rest on bottom edge since ball has gone beyond it
+            eachBall.y = CANVAS_HEIGHT - eachBall.radius;
         }
     
        
     });
+}
+
+function getSpeedFromCollision(d){
+    if(d >= BALL_BOUNCE_SPEED_LOSS){
+        return Math.abs(d) - BALL_BOUNCE_SPEED_LOSS;
+    }
+    return 0;
 }
 
 function createNewBall(isDragging){
