@@ -93,14 +93,11 @@ function updateBallMovement(){
                     eachBall.y = o.topEdge - eachBall.radius;
                     topOrBottomColliding = true;
                 }
-
-                // handle the situation where the ball is near the corner of the obstacle
+                
                 if(topOrBottomColliding){
                     if(eachBall.x >= o.rightEdge && eachBall.leftEdge <= o.rightEdge){
-                        eachBall.x = o.rightEdge + eachBall.radius;
                         eachBall.dx += BALL_BOUNCE_SPEED_LOSS / 4;
                     } else if(eachBall.x <= o.leftEdge && eachBall.rightEdge >= o.leftEdge){
-                        eachBall.x = o.leftEdge - eachBall.radius;
                         eachBall.dx -= BALL_BOUNCE_SPEED_LOSS / 4;
                     } 
                 }
