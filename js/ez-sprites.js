@@ -1,4 +1,4 @@
-// v0.1.4 w/ createCircleSpriteFromSvg
+// v0.1.6 - w/ debug mode on regular (non-svg) sprites
 
 let _canvas;
 let _ctx;
@@ -37,12 +37,25 @@ export function drawRect (x, y, width, height, color) {
     _ctx.fillRect(x, y, width, height);
 }
 
+function drawDebugRect(r){
+    _ctx.strokeStyle = "limegreen";
+    _ctx.lineWidth = 1;
+    _ctx.strokeRect(r.x, r.y, r.width, r.height);
+}
+
 export function drawCircle (x, y, radius, color) {
-    _ctx.fillStyle = color;
     _ctx.beginPath();
     // arc(x, y, radius, startAngle, endAngle)
     _ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    _ctx.fillStyle = color;
     _ctx.fill();
+}
+
+function drawDebugCircle(s){
+    _ctx.strokeStyle = "limegreen";
+    _ctx.lineWidth = 1;
+    _ctx.arc(s.x, s.y, s.radius, 0, 2 * Math.PI);
+    _ctx.stroke();
 }
 
 function drawPathArray(x, y, paths, scale, debug){
@@ -94,7 +107,7 @@ export function getRandomColorHexString(){
 }
 
 export function getRandom8BitIntegerAsHexString(){
-    return Math.trunc(Math.random() * 256).toString(16);
+    return Math.trunc(Math.random() * 256).toString(16).padStart(2, 0);
 }
 
 function getRectEdges (rect) {
@@ -115,24 +128,31 @@ function getCircleEdges(circle) {
     }
 }
 
-export function createRectSprite(x, y, dx, dy, width, height, color){
+export function createRectSprite(x, y, dx, dy, width, height, color, debug = false){
     const draw = (r) => {
         drawRect(r.x, r.y, r.width, r.height, r.color);
+        if(r.debug){
+            drawDebugRect(r);
+        }
     }
-
     let sprite = createSprite(x, y, dx, dy, color, draw, getRectEdges);
     sprite.width = width;
     sprite.height = height;
+    sprite.debug = debug;
     return sprite;
 }
 
-export function createCircleSprite(x, y, dx, dy, radius, color){
+export function createCircleSprite(x, y, dx, dy, radius, color, debug = false){
     const draw = (c) => {
         drawCircle(c.x, c.y, c.radius, c.color);
+        if(c.debug){
+            drawDebugCircle(c);
+        }
     }
 
     let sprite = createSprite(x, y, dx, dy, color, draw, getCircleEdges);
     sprite.radius = radius;
+    sprite.debug = debug;
     return sprite;
 }
 
@@ -171,13 +191,9 @@ export async function createCircleSpriteFromSvg(x, y, dx, dy, radius, scale, svg
         drawPathArray(s.x - radius, s.y - radius, s.paths, s.scale, false);
         _ctx.restore();
         if(s.debug){
-            _ctx.strokeStyle = "limegreen";
-            _ctx.lineWidth = 1;
-            _ctx.arc(s.x, s.y, s.radius, 0, 2 * Math.PI);
-            _ctx.stroke();
+           drawDebugCircle(s);
         }
     }
-
     let sprite = createSprite(x, y, dx, dy, null, draw, getCircleEdges);
     sprite.paths = await pathArrayFromSvg(svgDoc);
     sprite.scale = scale;
@@ -242,28 +258,28 @@ export function circleOverlapsRect(c, r){
 
 // returns true if circle sprite is colliding with rectangle sprite's top edge
 export function circleRectangleTopEdgeAreColliding(c, r){
-    if (c.y < r.topEdge && c.rightEdge > r.leftEdge && c.leftEdge < r.rightEdge){
+    if (c.y <= r.topEdge && c.rightEdge >= r.leftEdge && c.leftEdge <= r.rightEdge){
         return checkDistanceToPointLessThanRadius(c, c.x, r.topEdge);
     }
     return false;
 }
 
 export function circleRectangleBottomEdgeAreColliding(c, r){
-    if (c.y > r.bottomEdge && c.rightEdge > r.leftEdge && c.leftEdge < r.rightEdge){
+    if (c.y >= r.bottomEdge && c.rightEdge >= r.leftEdge && c.leftEdge <= r.rightEdge){
         return checkDistanceToPointLessThanRadius(c, c.x, r.bottomEdge);
     }
     return false;
 }
 
 export function circleRectangleRightEdgeAreColliding(c, r){
-    if (c.x > r.rightEdge && c.bottomEdge > r.topEdge && c.topEdge < r.bottomEdge){
+    if (c.x >= r.rightEdge && c.bottomEdge >= r.topEdge && c.topEdge <= r.bottomEdge){
         return checkDistanceToPointLessThanRadius(c, r.rightEdge, c.y);
     }
     return false;
 }
 
 export function circleRectangleLeftEdgeAreColliding(c, r){
-    if (c.x < r.leftEdge && c.bottomEdge > r.topEdge && c.topEdge < r.bottomEdge){
+    if (c.x <= r.leftEdge && c.bottomEdge >= r.topEdge && c.topEdge <= r.bottomEdge){
         return checkDistanceToPointLessThanRadius(c, r.leftEdge, c.y);
     }
     return false;
