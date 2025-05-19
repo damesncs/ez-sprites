@@ -140,8 +140,9 @@ function updateBallMovement(){
 }
 
 function getSpeedFromCollision(d){
-    if(d >= BALL_BOUNCE_SPEED_LOSS){
-        return Math.abs(d) - BALL_BOUNCE_SPEED_LOSS;
+    const absSpeed = Math.abs(d);
+    if(absSpeed >= BALL_BOUNCE_SPEED_LOSS){
+        return absSpeed - BALL_BOUNCE_SPEED_LOSS;
     }
     return 0;
 }
