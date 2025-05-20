@@ -1,4 +1,4 @@
-// svg sprite movement demo
+// svg sprites starter
 
 import {
     clearCanvas,
@@ -9,9 +9,8 @@ import {
     moveAndDrawSprites,
     pathArrayFromSvg,
     rectOverlapsRect,
-    setupCanvas,
-    getRandom
-} from "/ez-sprites/js/ez-sprites.js";
+    setupCanvas
+} from "./ez-sprites.js";
 
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 500;
@@ -210,6 +209,10 @@ function onKeyEventArrowUp(eventType){
         character.dy = 0;
         character.paths = CHARACTER_STANDING;
     }
+}
+
+function getRandom(min, max) {
+    return Math.random() * (max - min) + min;
 }
 
 // function onKeyEventArrowDown(eventType){
