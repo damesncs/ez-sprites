@@ -11,7 +11,7 @@ import {
     rectOverlapsRect,
     setupCanvas,
     getRandom
-} from "./ez-sprites.js";
+} from "/ez-sprites/js/ez-sprites.js";
 
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 500;
