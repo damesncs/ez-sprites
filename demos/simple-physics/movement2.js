@@ -1,4 +1,5 @@
-// mouse drag and simple sprite physics
+// mouse drag and simple sprite physics 
+// This is very simplistic! You will notice some glitches around the corners of obstacles in particular.
 
 import {
     circleRectangleBottomEdgeAreColliding,
@@ -11,7 +12,7 @@ import {
     drawBorder,
     getRandomColorHexString,
     moveAndDrawSprites, setupCanvas
-} from "./ez-sprites.js";
+} from "../../js/ez-sprites.js";
 
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 500;

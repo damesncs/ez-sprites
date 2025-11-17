@@ -9,7 +9,7 @@ import {
     pathArrayFromSvg,
     rectOverlapsRect,
     setupCanvas
-} from "/ez-sprites/js/ez-sprites.js";
+} from "../../js/ez-sprites.js";
 
 const CANVAS_WIDTH = 900;
 const CANVAS_HEIGHT = 700;

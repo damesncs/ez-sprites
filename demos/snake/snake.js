@@ -9,7 +9,7 @@ import {
     moveAndDrawSprites,
     rectOverlapsRect,
     setupCanvas
-} from "./ez-sprites.js";
+} from "../../js/ez-sprites.js";
 
 window.onload = start;
 

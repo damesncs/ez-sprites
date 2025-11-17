@@ -11,9 +11,7 @@ import {
     drawBorder,
     getRandomColorHexString,
     moveAndDrawSprites, removeSprite, setupCanvas
-} from "./ez-sprites.js";
-
-import ghostShapeList from "./ghost.json" with { type: "json" }
+} from "../../js/ez-sprites.js";
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 300;
