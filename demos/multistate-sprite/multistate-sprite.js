@@ -9,7 +9,8 @@ import {
     pathArrayFromSvg, 
     rectOverlapsRect,
     setupCanvas
-} from "/ez-sprites/js/ez-sprites.js";
+} from "../../js/ez-sprites.js";
+
 
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 500;
@@ -41,20 +42,20 @@ async function start() {
     setupCanvas(document.getElementById("canvas"), CANVAS_HEIGHT, CANVAS_WIDTH);
 
     // stickman states stored in these variables
-    STICKMAN_WALKING_FORWARD = await pathArrayFromSvg("stickman-walking-forward.svg");
-    STICKMAN_STANDING = await pathArrayFromSvg("stickman-standing.svg");
-    STICKMAN_WALKING_LEFT = await pathArrayFromSvg("stickman-walking-left.svg");
-    STICKMAN_WALKING_RIGHT = await pathArrayFromSvg("stickman-walking-right.svg");
-    STICKMAN_SURPRISED = await pathArrayFromSvg("stickman-surprised.svg");
-    STICKMAN_MAD = await pathArrayFromSvg("stickman-mad.svg");
+    STICKMAN_WALKING_FORWARD = await pathArrayFromSvg("./svg/stickman_walking_forward.svg");
+    STICKMAN_STANDING = await pathArrayFromSvg("./svg/stickman_standing.svg");
+    STICKMAN_WALKING_LEFT = await pathArrayFromSvg("./svg/stickman_walking_left.svg");
+    STICKMAN_WALKING_RIGHT = await pathArrayFromSvg("./svg/stickman_walking_right.svg");
+    STICKMAN_SURPRISED = await pathArrayFromSvg("./svg/stickman_surprised.svg");
+    STICKMAN_MAD = await pathArrayFromSvg("./svg/stickman_mad.svg");
     
-    turtle = await createSpriteFromSvg(500, 400, -0.25, 0, 0.15, "turtle.svg");
+    turtle = await createSpriteFromSvg(500, 400, -0.25, 0, 0.15, "./svg/turtle.svg");
 
     walls.push(createRectSprite(250, 150, 0, 0, 10, 200, "gray"));
     walls.push(createRectSprite(550, 150, 0, 0, 10, 200, "gray"));
     walls.push(createRectSprite(250, 150, 0, 0, 300, 10, "gray"));
     
-    stickman = await createSpriteFromSvg(300, 300, 0, 0, 0.5, "stickman-standing.svg");
+    stickman = await createSpriteFromSvg(300, 300, 0, 0, 0.5, "./svg/stickman_standing.svg");
 
     setInterval(drawEachFrame, 15);
 

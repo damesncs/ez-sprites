@@ -12,7 +12,7 @@ import {
     drawText,
     getRandomColorHexString,
     moveAndDrawSprites, setupCanvas
-} from "./ez-sprites.js";
+} from "../../js/ez-sprites.js";
 
 const CANVAS_WIDTH = 700;
 const CANVAS_HEIGHT = 500;
