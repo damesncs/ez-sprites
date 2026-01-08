@@ -1,22 +1,68 @@
-// v0.1.6 - w/ debug mode on regular (non-svg) sprites
+// v0.2 - with physics provided by planck.js
+// - removed JSON sprite support
+
+import { World } from "../../js/planck.mjs";
 
 let _canvas;
 let _ctx;
 
-export const SHAPE_TYPE_RECT = "rect";
-export const SHAPE_TYPE_CIRC = "circle";
-export const SHAPE_TYPE_POINT = "point";
+let _world;
 
-const POINT_RADIUS = 3;
-const POINT_COLOR = "black";
+const _sprites = [];
 
-const SPRITES = [];
+export const TIME_STEP = 1 / 60;
 
-export function setupCanvas (cvs, height, width){
+function setupCanvas (cvs, width, height){
     _canvas = cvs;
     _canvas.width = width;
     _canvas.height = height;
     _ctx = _canvas.getContext("2d");
+}
+
+export function setupWorld(canvasId, width, height, worldDef){
+    setupCanvas(document.getElementById(canvasId), width, height);
+    const wd = worldDef === undefined ? { gravity: {x: 0, y: -10}, allowSleep: true } : worldDef;
+    _world = new World(wd);
+
+    _world.on('remove-joint', function(joint) {
+        // remove all references to joint.  
+    });
+    _world.on('remove-fixture', function(fixture) {
+        // remove all references to fixture.
+    });
+    _world.on('remove-body', function(body) {
+        // bodies are not removed implicitly,
+        // but the world publishes this event if a body is removed
+    });
+
+
+}
+
+export function renderFrame(){
+    _world.step(TIME_STEP);
+
+     // Iterate over bodies
+     for (let body = _world.getBodyList(); body; body = body.getNext()) {
+        // this.renderBody(body);
+        // ... and fixtures
+        for (let fixture = body.getFixtureList(); fixture; fixture = fixture.getNext()) {
+        //   this.renderFixture(fixture);
+        }
+      }
+   
+      // Iterate over joints
+      for (let joint = _world.getJointList(); joint; joint = joint.getNext()) {
+        // this.renderJoint(joint);
+      }
+   
+
+}
+
+/** draws all sprites  */
+export function drawSprites(){
+    _sprites.forEach(s => {
+        s.draw(s);
+    });
 }
 
 export function drawLine(x1, y1, x2, y2, color){
@@ -110,97 +156,84 @@ export function getRandom8BitIntegerAsHexString(){
     return Math.trunc(Math.random() * 256).toString(16).padStart(2, 0);
 }
 
-function getRectEdges (rect) {
-    return {
-        leftEdge: rect.x,
-        rightEdge: rect.x + rect.width,
-        topEdge: rect.y,
-        bottomEdge: rect.y + rect.height
-    }
-}
+// function getRectEdges (rect) {
+//     return {
+//         leftEdge: rect.x,
+//         rightEdge: rect.x + rect.width,
+//         topEdge: rect.y,
+//         bottomEdge: rect.y + rect.height
+//     }
+// }
 
-function getCircleEdges(circle) {
-    return {
-        leftEdge: circle.x - circle.radius,
-        rightEdge: circle.x + circle.radius,
-        topEdge: circle.y - circle.radius,
-        bottomEdge: circle.y + circle.radius
-    }
-}
+// function getCircleEdges(circle) {
+//     return {
+//         leftEdge: circle.x - circle.radius,
+//         rightEdge: circle.x + circle.radius,
+//         topEdge: circle.y - circle.radius,
+//         bottomEdge: circle.y + circle.radius
+//     }
+// }
 
-export function createRectSprite(x, y, dx, dy, width, height, color, debug = false){
-    const draw = (r) => {
-        drawRect(r.x, r.y, r.width, r.height, r.color);
-        if(r.debug){
-            drawDebugRect(r);
-        }
-    }
-    let sprite = createSprite(x, y, dx, dy, color, draw, getRectEdges);
-    sprite.width = width;
-    sprite.height = height;
-    sprite.debug = debug;
-    return sprite;
-}
+// export function createRectSprite(x, y, dx, dy, width, height, color, debug = false){
+//     const draw = (r) => {
+//         drawRect(r.x, r.y, r.width, r.height, r.color);
+//         if(r.debug){
+//             drawDebugRect(r);
+//         }
+//     }
+//     let sprite = createSprite(x, y, dx, dy, color, draw, getRectEdges);
+//     sprite.width = width;
+//     sprite.height = height;
+//     sprite.debug = debug;
+//     return sprite;
+// }
 
-export function createCircleSprite(x, y, dx, dy, radius, color, debug = false){
-    const draw = (c) => {
-        drawCircle(c.x, c.y, c.radius, c.color);
-        if(c.debug){
-            drawDebugCircle(c);
-        }
-    }
+// export function createCircleSprite(x, y, dx, dy, radius, color, debug = false){
+//     const draw = (c) => {
+//         drawCircle(c.x, c.y, c.radius, c.color);
+//         if(c.debug){
+//             drawDebugCircle(c);
+//         }
+//     }
 
-    let sprite = createSprite(x, y, dx, dy, color, draw, getCircleEdges);
-    sprite.radius = radius;
-    sprite.debug = debug;
-    return sprite;
-}
-
-export function createCompoundShapeRectSprite(x, y, dx, dy, scale, shapesObj, debug = false) {
-    const draw = (s) => {
-        drawShapesObj(s.shapesObj, s.x, s.y, s.scale, debug);
-    }
-
-    let sprite = createSprite(x, y, dx, dy, null, draw, getRectEdges);
-    sprite.width = shapesObj.nativeWidth * scale;
-    sprite.height = shapesObj.nativeHeight * scale;
-    sprite.scale = scale;
-    sprite.shapesObj = shapesObj;
-    return sprite;
-}
+//     let sprite = createSprite(x, y, dx, dy, color, draw, getCircleEdges);
+//     sprite.radius = radius;
+//     sprite.debug = debug;
+//     return sprite;
+// }
 
 
-export async function createSpriteFromSvg(x, y, dx, dy, scale, svgDoc, debug = false) {
-    const draw = (s) => {
-        drawPathArray(s.x, s.y, s.paths, s.scale, debug);
-    }
-    let sprite = createSprite(x, y, dx, dy, null, draw, getRectEdges);
-    sprite.paths = await pathArrayFromSvg(svgDoc);
-    sprite.width = sprite.paths.nativeWidth * scale;
-    sprite.height = sprite.paths.nativeHeight * scale;
-    sprite.scale = scale;
-    return sprite;
-}
+// export async function createSpriteFromSvg(x, y, dx, dy, scale, svgDoc, debug = false) {
+//     const draw = (s) => {
+//         drawPathArray(s.x, s.y, s.paths, s.scale, debug);
+//     }
+//     let sprite = createSprite(x, y, dx, dy, null, draw, getRectEdges);
+//     sprite.paths = await pathArrayFromSvg(svgDoc);
+//     sprite.width = sprite.paths.nativeWidth * scale;
+//     sprite.height = sprite.paths.nativeHeight * scale;
+//     sprite.scale = scale;
+//     return sprite;
+// }
 
-export async function createCircleSpriteFromSvg(x, y, dx, dy, radius, scale, svgDoc, debug = false){
-    const draw = (s) => {
-        _ctx.save();
-        _ctx.beginPath();
-        _ctx.arc(s.x, s.y, s.radius, 0, 2 * Math.PI);
-        _ctx.clip();
-        drawPathArray(s.x - radius, s.y - radius, s.paths, s.scale, false);
-        _ctx.restore();
-        if(s.debug){
-           drawDebugCircle(s);
-        }
-    }
-    let sprite = createSprite(x, y, dx, dy, null, draw, getCircleEdges);
-    sprite.paths = await pathArrayFromSvg(svgDoc);
-    sprite.scale = scale;
-    sprite.radius = radius;
-    sprite.debug = debug;
-    return sprite;
-}
+// export async function createCircleSpriteFromSvg(x, y, dx, dy, radius, scale, svgDoc, debug = false){
+//     const draw = (s) => {
+//         _ctx.save();
+//         _ctx.beginPath();
+//         _ctx.arc(s.x, s.y, s.radius, 0, 2 * Math.PI);
+//         _ctx.clip();
+//         drawPathArray(s.x - radius, s.y - radius, s.paths, s.scale, false);
+//         _ctx.restore();
+//         if(s.debug){
+//            drawDebugCircle(s);
+//         }
+//     }
+//     let sprite = createSprite(x, y, dx, dy, null, draw, getCircleEdges);
+//     sprite.paths = await pathArrayFromSvg(svgDoc);
+//     sprite.scale = scale;
+//     sprite.radius = radius;
+//     sprite.debug = debug;
+//     return sprite;
+// }
 
 export function createSprite(x, y, dx, dy, color, drawFn, findEdgesFn){
     const sprite = {
@@ -216,12 +249,13 @@ export function createSprite(x, y, dx, dy, color, drawFn, findEdgesFn){
         draw: drawFn,
         findEdges: findEdgesFn
     };
-    SPRITES.push(sprite);
+    _sprites.push(sprite);
     return sprite;
 }
 
+/** applies dx and dy to the x and y of each sprite, draws the sprite, and finds the new edges */
 export function moveAndDrawSprites(){
-    SPRITES.forEach(s => {
+    _sprites.forEach(s => {
         s.x += s.dx;
         s.y += s.dy;
         s.draw(s);
@@ -234,7 +268,7 @@ export function moveAndDrawSprites(){
 }
 
 export function removeSprite(sprite){
-    SPRITES.splice(SPRITES.indexOf(sprite), 1);
+    _sprites.splice(_sprites.indexOf(sprite), 1);
 }
 
 export function rectOverlapsRect(r1, r2){
