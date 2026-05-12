@@ -1,4 +1,4 @@
-// v0.1.6 - w/ debug mode on regular (non-svg) sprites
+// v0.1.7 - addl overlap fns
 
 let _canvas;
 let _ctx;
@@ -108,6 +108,11 @@ export function getRandomColorHexString(){
 
 export function getRandom8BitIntegerAsHexString(){
     return Math.trunc(Math.random() * 256).toString(16).padStart(2, 0);
+}
+
+// h/t MDN
+export function getRandom(min, max) {
+    return Math.random() * (max - min) + min;
 }
 
 function getRectEdges (rect) {
@@ -247,6 +252,30 @@ export function rectOverlapsRectX(r1, r2){
 
 export function rectOverlapsRectY(r1, r2){
     return r1.bottomEdge > r2.topEdge && r1.topEdge < r2.bottomEdge;
+}
+
+export function spriteOverlapsRectRightEdge(sprite, rectToCheck){
+    return sprite.rightEdge > rectToCheck.rightEdge &&
+            sprite.leftEdge > rectToCheck.leftEdge &&
+             rectOverlapsRect(sprite, rectToCheck);
+}
+
+export function spriteOverlapsRectLeftEdge(sprite, rectToCheck){
+    return sprite.leftEdge < rectToCheck.leftEdge &&
+            sprite.rightEdge < rectToCheck.rightEdge &&
+             rectOverlapsRect(sprite, rectToCheck);
+}
+
+export function spriteOverlapsRectTopEdge(sprite, rectToCheck){
+    return sprite.topEdge < rectToCheck.topEdge &&
+            sprite.bottomEdge < rectToCheck.bottomEdge &&
+             rectOverlapsRect(sprite, rectToCheck);
+}
+
+export function spriteOverlapsRectBottomEdge(sprite, rectToCheck){
+    return sprite.bottomEdge > rectToCheck.bottomEdge &&
+            sprite.topEdge > rectToCheck.topEdge &&
+             rectOverlapsRect(sprite, rectToCheck);
 }
 
 export function circleOverlapsRect(c, r){

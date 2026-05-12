@@ -1,4 +1,4 @@
-// sprite movement demo #3
+// ez-sprites platformer demo
 
 import {
     circleOverlapsRect,
@@ -12,11 +12,16 @@ import {
     pathArrayFromSvg,
     rectOverlapsRect,
     removeSprite,
-    setupCanvas
+    setupCanvas,
+    spriteOverlapsRectBottomEdge,
+    spriteOverlapsRectLeftEdge,
+    spriteOverlapsRectRightEdge,
+    spriteOverlapsRectTopEdge,
+    getRandom
 } from "../../js/ez-sprites.js";
 
 const CANVAS_WIDTH = 900;
-const CANVAS_HEIGHT = 700;
+const CANVAS_HEIGHT = 640;
 
 const EVENT_KEY_PRESSED = "keydown";
 const EVENT_KEY_RELEASED = "keyup";
@@ -35,11 +40,13 @@ let turtle;
 
 let playerScore = 0;
 
-const obstacles = [];
-let coins = [];
+let platforms = []; // we will add platform sprites to this array
+let coins = []; // we will add coin sprites to this array
 
 const FLOOR_Y = CANVAS_HEIGHT;
 
+// these variables store the alternate versions of the character.
+// They are in ALL_CAPS to show that they are "constants"
 let 
 CHARACTER_WALKING_LEFT,
 CHARACTER_WALKING_RIGHT,
@@ -47,11 +54,14 @@ CHARACTER_JUMPING_LEFT,
 CHARACTER_JUMPING_RIGHT,
 CHARACTER_SURPRISED,
 CHARACTER_STANDING
+;
+let background;
 
 async function start() {
     setupCanvas(document.getElementById("canvas"), CANVAS_HEIGHT, CANVAS_WIDTH);
 
-    // create initial sprites here
+    background = await createSpriteFromSvg(0, 0, 0, 0, 1, "./svg/background.svg");
+
     character = await createSpriteFromSvg(50, 200, 0, 0, 0.5, "svg/stickman_standing.svg");
 
     character.y = FLOOR_Y - character.height;
@@ -65,53 +75,65 @@ async function start() {
     CHARACTER_JUMPING_RIGHT = await pathArrayFromSvg("svg/stickman_jumping_right.svg");
     CHARACTER_SURPRISED = await pathArrayFromSvg("svg/stickman_surprised.svg");
 
+    // create random platforms
     for(let i = 0; i < 6; i++){
         let width = getRandom(40, 100);
         let x = 100 + width + (i * 100);
         let height = 10;
         let y = CANVAS_HEIGHT - height - (i * height * 10);
-        obstacles.push(createRectSprite(x, y, 0, 0, width, height, "gray"));
+        platforms.push(createRectSprite(x, y, 0, 0, width, height, "gray"));
         coins.push(createCircleSprite(x + width / 2, y - 30, 0, 0, 10, "gold"))
     }
 
     turtle = await createSpriteFromSvg(CANVAS_WIDTH - 100, CANVAS_HEIGHT - 300, -0.5, 0, 0.10, "./svg/turtle.svg");
 
-    setInterval(drawEachFrame, 15);
-
     addEventListener("keydown", onKeyEvent);
     addEventListener("keyup", onKeyEvent);
     // addEventListener("mousedown", onMouseDown);
+
+    drawEachFrame(0); // start the animation loop
 }
 
-function drawEachFrame(){
+function drawEachFrame(timestamp){
     clearCanvas();
     drawBorder();
     checkSpriteCollisions();
     moveAndDrawSprites();
+    drawScore();
+
+     // This function is built-in to the browser.
+     // It asks the browser to call this function again when ready.
+     // This lets the browser manage CPU cycles in order to keep everything running smoothly,
+     // especially when there are lots of sprites to draw each frame.
+     // Typically, it ends up at about 60 frames per second.
+    requestAnimationFrame(drawEachFrame);
+}
+
+function drawScore(){
     drawText(10, 0, playerScore, 72, "red");
 }
 
 function checkSpriteCollisions(){
-    let collectedCoins = [];
+    
     coins.forEach(eachCoin => {
         if(circleOverlapsRect(eachCoin, character)){
-            if(!collectedCoins.includes(eachCoin)){
-                collectedCoins.push(eachCoin);
-                eachCoin.radius = 0;
-                
-            } 
+            playerScore ++;
+            eachCoin.collected = true;
+            removeSprite(eachCoin); // remove it from the canvas, but a reference will still exist in `coins`
         }
     });
-    playerScore += collectedCoins.length;
+    // remove all collected coins from the list of coins
+    coins = coins.filter(c => !c.collected);
 
     if(rectOverlapsRect(character, turtle)){
         character.paths = CHARACTER_SURPRISED;
         playerScore = 0;                         
     }
 
-    obstacles.forEach(obstacle => {
+    platforms.forEach(obstacle => {
         let colliding = false;
         
+        // is character standing on a platform?
         if(spriteOverlapsRectTopEdge(character, obstacle)){
             if(character.dy > 0){
                 character.dy = -(getSpeedFromCollision(character.dy));
@@ -121,22 +143,25 @@ function checkSpriteCollisions(){
             // standing on an obstacle, reset jump
             character.jumping = false;  
         }
-
+        
         else if(spriteOverlapsRectBottomEdge(character, obstacle)){
+            // bounce will result in character moving down
             character.dy = getSpeedFromCollision(character.dy);
             character.y = obstacle.bottomEdge + 1;
             colliding = true;
         } 
         
         else if(spriteOverlapsRectRightEdge(character, obstacle)){
+            // bounce will result in character moving to the right (positive dx)
             character.dx = getSpeedFromCollision(character.dx);
-            character.x = obstacle.rightEdge;
+            character.x = obstacle.rightEdge + 1;
             colliding = true;
         }
 
         else if(spriteOverlapsRectLeftEdge(character, obstacle)){
+            // bounce will result in character moving to left (negative dx)
             character.dx = -(getSpeedFromCollision(character.dx));
-            character.x = obstacle.leftEdge - character.width;
+            character.x = obstacle.leftEdge - 1 - character.width;
             colliding = true;
         }
         
@@ -158,30 +183,7 @@ function checkSpriteCollisions(){
     }
 }
 
-function spriteOverlapsRectRightEdge(sprite, rectToCheck){
-    return sprite.rightEdge > rectToCheck.rightEdge &&
-            sprite.leftEdge > rectToCheck.leftEdge &&
-             rectOverlapsRect(sprite, rectToCheck);
-}
-
-function spriteOverlapsRectLeftEdge(sprite, rectToCheck){
-    return sprite.leftEdge < rectToCheck.leftEdge &&
-            sprite.rightEdge < rectToCheck.rightEdge &&
-             rectOverlapsRect(sprite, rectToCheck);
-}
-
-function spriteOverlapsRectTopEdge(sprite, rectToCheck){
-    return sprite.topEdge < rectToCheck.topEdge &&
-            sprite.bottomEdge < rectToCheck.bottomEdge &&
-             rectOverlapsRect(sprite, rectToCheck);
-}
-
-function spriteOverlapsRectBottomEdge(sprite, rectToCheck){
-    return sprite.bottomEdge > rectToCheck.bottomEdge &&
-            sprite.topEdge > rectToCheck.topEdge &&
-             rectOverlapsRect(sprite, rectToCheck);
-}
-
+// returns absolute value of speed after collision
 function getSpeedFromCollision(d){
     const absSpeed = Math.abs(d);
     if(absSpeed >= CHARACTER_BOUNCE_SPEED_LOSS){
@@ -190,18 +192,9 @@ function getSpeedFromCollision(d){
     return 0;
 }
 
-
-function createRandomObstacles(count){
-    for(let i = 0; i < count; i++){
-        const width = getRandom(10, 70);
-        const height = getRandom(10, 20);
-        const x = getRandom(0, CANVAS_WIDTH - width);
-        const y = getRandom(0, CANVAS_HEIGHT - height);
-        obstacles.push(createRectSprite(x, y, 0, 0, width, height, "gray"));
-    }
-}
-
 function onKeyEvent(e){
+    // These key codes come from the browser. 
+    // see https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_code_values
     if(e.code === "ArrowRight"){
         onKeyEventArrowRight(e.type);
     }
@@ -255,12 +248,4 @@ function onKeyEventArrowUp(eventType){
     }
 }
 
-// function onMouseDown(e){
-//     const width = getRandom(10, 70);
-//     const height = getRandom(10, 20);
-//     obstacles.push(createRectSprite(e.offsetX, e.offsetY, 0, 0, width, height, "gray"));
-// }
 
-function getRandom(min, max) {
-    return Math.random() * (max - min) + min;
-}
